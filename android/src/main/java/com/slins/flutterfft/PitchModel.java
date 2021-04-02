@@ -54,7 +54,8 @@ public class PitchModel implements PitchInterface {
                         processPitch(FlutterFftPlugin.frequency, result); // UPDATE NOTE FROM THE DETECTED FREQUENCY
                     } catch(Exception e) {
                         Log.d(TAG, "KOKOKOKKOK, Excep: " + e.toString());
-                        result.error(ERROR_PITCH_DETECTION_FAILURE, "Could not process pitch: " + e.toString(), null);
+                        return;
+                        //result.error(ERROR_PITCH_DETECTION_FAILURE, "Could not process pitch: " + e.toString(), null);
                     }
 
                     try {
