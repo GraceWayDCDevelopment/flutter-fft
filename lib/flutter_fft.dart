@@ -5,9 +5,10 @@ class FlutterFft {
   static const MethodChannel _channel =
       const MethodChannel("com.slins.flutterfft/record");
 
-  static StreamController<List<Object>> _recorderController;
+  static StreamController<List<Object>>? _recorderController;
 
-  Stream<List<Object>> get onRecorderStateChanged => _recorderController.stream;
+  Stream<List<Object>> get onRecorderStateChanged =>
+      _recorderController!.stream;
 
   bool _isRecording = false;
 
@@ -83,7 +84,7 @@ class FlutterFft {
 
   set setTuning(List<String> tuning) => _tuning = tuning;
 
-  Future<void> _setRecorderCallback() async {
+  _setRecorderCallback() async {
     if (_recorderController == null) {
       _recorderController = new StreamController.broadcast();
     }
@@ -92,7 +93,7 @@ class FlutterFft {
       switch (call.method) {
         case "updateRecorderProgress":
           if (_recorderController != null) {
-            _recorderController.add(call.arguments);
+            _recorderController!.add(call.arguments);
           } else {
             print("Is not null");
           }
@@ -100,44 +101,55 @@ class FlutterFft {
         default:
           throw new ArgumentError("Unknown method: ${call.method}");
       }
-      return null;
+      return Future.delayed(Duration(microseconds: 1));
     });
   }
 
   Future<void> _removeRecorderCallback() async {
-    if (_recorderController != null) {}
+    /*if (_recorderController != null) {}
     _recorderController
-      ..add(null)
-      ..close();
+      //..add(null)
+      ..close();*/
+    if (_recorderController != null) _recorderController!.close();
     _recorderController = null;
   }
 
   Future<String> startRecorder() async {
+    print("~~~~~~~~Got to started");
     try {
       await _channel.invokeMethod("setSubscriptionDuration",
           <String, double>{'sec': this.getSubscriptionDuration});
     } catch (err) {
       print("Could not set subscription duration, error: $err");
     }
+    print("~~~~~~~~FINISHED Channel Invoke");
 
     if (this.getIsRecording) {
       throw new RecorderRunningException("Recorder is already running.");
     }
 
     try {
+      print("~~~~~~~~${this.getTuning}");
+      print("~~~~~~~~${this.getNumChannels}");
+      print("~~~~~~~~${this.getSampleRate}");
+      print("~~~~~~~~${this.getAndroidAudioSource.value}");
+      print("~~~~~~~~${this.getTolerance}");
       String result = await _channel.invokeMethod(
         'startRecorder',
         <String, dynamic>{
           'tuning': this.getTuning,
           'numChannels': this.getNumChannels,
           'sampleRate': this.getSampleRate,
-          'androidAudioSource': this.getAndroidAudioSource?.value,
+          'androidAudioSource': this.getAndroidAudioSource.value,
           'tolerance': this.getTolerance,
         },
       );
+      print("~~~~~~~~Finished invoke 2");
       _setRecorderCallback();
+      print("~~~~~~~~Finished Set Recorder Callback");
       this.setIsRecording = true;
 
+      print("~~~~~~~~Ready to return result");
       return result;
     } catch (err) {
       throw new Exception(err);
